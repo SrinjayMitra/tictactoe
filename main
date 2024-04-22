@@ -1,0 +1,317 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Structure
+struct Computer
+{
+    int Row;
+    int Column;
+};
+
+// Constants
+const int Human_Player = 1;         // To hold the integer value of Player 1
+const int AI_Player = 2;            // To hold the integer value of Player 2
+const int GRID_SIZE = 3;            // To hold the grid size of the array
+const char Human_Move = 'X';        // To hold the
+const char AI_Move = 'O';
+
+// Global variable
+int index = 0;          // Variable to keep track of the number of moves
+
+// Function prototypes
+Computer Best_Computer_Move(char Board[][GRID_SIZE], int Player);
+void Play_Game();
+void Initial_Board(char Array[][GRID_SIZE]);
+void Display_Board(char Array[][GRID_SIZE]);
+void Turn(char Game_Board[][GRID_SIZE], int Whose_Turn);
+int Check_For_Winner(char Game_Board[][GRID_SIZE]);
+int Min_Max(char Board[][GRID_SIZE], int Depth, bool isMax);
+
+int main()
+{
+    Play_Game();
+    return 0;
+}
+
+//*******************************************
+// Definition of Play_Game function.        *
+//*******************************************
+void Play_Game()
+{
+    char Board[GRID_SIZE][GRID_SIZE];           // Declare a char array
+    Initial_Board(Board);                       // Call the Initial_Board function 
+    Turn(Board, Human_Player);                  // The Turn function to Play
+}
+
+//*******************************************
+// Definition of Initial_Board function.    *
+//*******************************************
+void Initial_Board(char Array[][GRID_SIZE])
+{
+    int number = 1;
+    for (int i = 0; i < GRID_SIZE; i++)
+    {
+        for (int j = 0; j < GRID_SIZE; j++)
+        {
+            Array[i][j] = to_string(number).c_str()[0]; 
+            number += 1;
+        }
+    }
+    // Display the contents of the array
+    cout << "\t-------\n";
+    for (int i = 0; i < GRID_SIZE; i++)
+    {
+        cout << "\t|";
+        for (int j = 0; j < GRID_SIZE; j++)
+        {
+            cout << Array[i][j] << "|";
+        }
+        cout << "\n\t-------\n";
+    }
+}
+
+//*******************************************
+// Definition of Display_Board function.    *
+//*******************************************
+void Display_Board(char Array[][GRID_SIZE])
+{
+    cout << "\t-------\n";
+    for (int i = 0; i < GRID_SIZE; i++)         // Loop through the array and display it contents
+    {
+        cout << "\t|";
+        for (int j = 0; j < GRID_SIZE; j++)
+        {
+            cout << (Array[i][j]) << "|";
+        }
+        cout << "\n\t-------\n";
+    }
+}
+
+//***********************************
+// Definition of Turn function.     *
+//***********************************
+void Turn(char Game_Board[][GRID_SIZE], int Whose_Turn)
+{
+    int input;          // To hold user input
+
+    while((Check_For_Winner(Game_Board) == 0) && (index != GRID_SIZE * GRID_SIZE))
+    {
+        if (Whose_Turn == Human_Player)
+        {
+            cout << "Player 1(Human) select a cell(1 - 9) to place your move." << endl;
+            while(!(cin >> input) || ((input <= 0 ) || (input > 9 )))              
+                       {
+                            cout << "ERROR!!! The number cannot be less than 0 or greater  than 9.";
+                            cin.clear();    
+                            cout << "\nPlease enter a number between 0 and 9: " << endl;
+                            cin.ignore(123, '\n');
+                       }
+            int row = (input - 1) / 3;
+            int column = (input - 1) % 3;
+            char Grid_Position = Game_Board[row][column];
+            if ((Grid_Position == 'X') || (Grid_Position == 'O'))
+            {
+                cout << "ERROR!!! A move has already been made there." << endl;
+            }
+            else
+            {
+                Game_Board[row][column] = Human_Move;
+                index++;
+                Display_Board(Game_Board);
+                Whose_Turn = AI_Player;
+            }
+        }
+        else if (Whose_Turn == AI_Player)
+        {
+            cout << "AI Player's turn" << endl;
+            Computer Computer_Move;
+            Computer_Move = Best_Computer_Move(Game_Board, AI_Player);
+            Game_Board[Computer_Move.Row][Computer_Move.Column] = AI_Move;
+            cout << "The value of AI is "; 
+            cout << Game_Board[Computer_Move.Row][Computer_Move.Column] << endl;
+            index++;
+            cout << "Row is " << Computer_Move.Row << endl;
+            cout << "Column is " << Computer_Move.Column << endl;            
+            cout << "AI Player has moved" << endl;
+            Display_Board(Game_Board);
+            Whose_Turn = Human_Player;
+        }
+    }
+    if (Check_For_Winner(Game_Board) != 0)          // Declare a winner
+    {
+        if (Check_For_Winner(Game_Board) == -10)    // If the score is -10
+            cout << "Congratulations!!! Player 1 has won!!!" << endl;
+        else if (Check_For_Winner(Game_Board) == 10)
+            cout << "Congratulations!!! Player 2 has won!!!" << endl;
+    }
+    else if ((Check_For_Winner(Game_Board) == 0) && (index == GRID_SIZE * GRID_SIZE))
+        cout << "It's a draw! Neither player has won." << endl;
+}
+
+//***********************************************
+// Definition of Check_For_Winner function.     *
+//***********************************************
+int Check_For_Winner(char Game_Board[][GRID_SIZE])
+{
+    // Check horizontal for winning conditions
+    for (int i = 0; i < GRID_SIZE; i++)
+    {
+        if (((Game_Board[i][0]) == (Game_Board[i][1])) &&
+            ((Game_Board[i][1]) == (Game_Board[i][2])) &&
+            ((Game_Board[i][2]) == (Game_Board[i][0])))
+        {
+            if ((Game_Board[i][0]) == AI_Move)
+                return 10;
+            else if ((Game_Board[i][0]) == Human_Move)
+                return -10;
+        }
+    }
+    // Check vertical for winning conditions
+    for (int j = 0; j < GRID_SIZE; j++)
+    {
+        if (((Game_Board[0][j]) == ((Game_Board[1][j]))) &&
+            ((Game_Board[1][j]) == ((Game_Board[2][j]))) &&
+            ((Game_Board[2][j]) == ((Game_Board[0][j]))))
+        {
+            if ((Game_Board[0][j]) == AI_Move)
+                return 10;
+            else if ((Game_Board[0][j]) == Human_Move)
+                return -10;
+        }
+    }
+    // Check diagonal for winning conditions
+    if (((Game_Board[0][0]) == (Game_Board[1][1])) &&
+        ((Game_Board[1][1]) == (Game_Board[2][2])) &&
+        ((Game_Board[2][2]) == (Game_Board[0][0])))
+    {
+        if ((Game_Board[0][0]) == AI_Move)
+            return 10;
+        else if ((Game_Board[0][0]) == Human_Move)
+            return -10;
+    }
+    // Check diagonal for winning conditions
+    else if (((Game_Board[0][2]) == (Game_Board[1][1])) &&
+             ((Game_Board[1][1]) == (Game_Board[2][0])) &&
+             ((Game_Board[2][0]) == (Game_Board[0][2])))
+    {
+        if ((Game_Board[0][2]) == AI_Move)
+            return 10;
+        else if ((Game_Board[0][2]) == Human_Move)
+            return -10;
+    }
+    return 0;
+}
+
+//*******************************************
+// Definition of Min_Max function.          *
+//*******************************************
+int Min_Max(char Board[][GRID_SIZE], int Depth, bool isMax)
+{
+    int Max_Move = -1000;
+    int Score = Check_For_Winner(Board);        // Set the value of Score
+    
+    if (Score == 10)                            // Return the value of Score if the computer has won
+        return Score;
+
+    if (Score == -10)                           // Return the value of Score if the human player has won
+        return Score;
+
+    if ((Check_For_Winner(Board) == 0) && (index == GRID_SIZE * GRID_SIZE))
+        return 0;
+    
+    if (isMax == false)                // Computer Player's turn
+    {
+        for (int i = 0; i < GRID_SIZE; i++)
+        {
+            for (int j = 0; j < GRID_SIZE; j++)
+            {
+                // Check to see if a player has made a move there
+                if (!((Board[i][j] == 'X') || (Board[i][j] == 'O')))
+                {
+                    // Store the current value of the element in the array
+                    char Temporary = Board[i][j];
+
+                    // Make the move for the computer
+                    Board[i][j] = AI_Move;
+
+                    Max_Move = max(Max_Move,
+                                   Min_Max(Board, Depth++, !isMax));
+
+                    // Undo the move made by the computer
+                    Board[i][j] = Temporary;
+                }
+            }
+        }
+        return Max_Move;
+    }
+    else if (isMax == true)                               // Human Player's turn
+    {
+        int Min_Move = 1000;
+        for (int i = 0; i < GRID_SIZE; i++)
+        {
+            for (int j = 0; j < GRID_SIZE; j++)
+            {
+                // Check to see if a player has made a move there
+                if (!((Board[i][j] == 'X') || (Board[i][j] == 'O')))
+                {
+                    // Store the current value of the element in the array
+                    char Temporary_2 = Board[i][j];
+
+                    // Make the move for the Human player
+                    Board[i][j] = Human_Move;
+
+                    Min_Move = min(Min_Move,
+                                   Min_Max(Board, Depth++, !isMax));
+
+                    // Undo the move made for the Human player
+                    Board[i][j] = Temporary_2;
+                }
+            }
+        }
+        return Min_Move;
+    }
+    return 0;
+}
+
+//***********************************************************
+// Definition of structure function Best_Computer_Move.     *
+//***********************************************************
+Computer Best_Computer_Move(char Board[][GRID_SIZE], int Player)
+{
+    int Best_Value = -1000;
+    Computer Best_Move;         // Create a structure variable
+    Best_Move.Row = -1;
+    Best_Move.Column = -1;
+
+    for (int i = 0; i < GRID_SIZE; i++)
+    {
+        for (int j = 0; j < GRID_SIZE; j++)
+        {
+            // Check to see if a player has made a move there
+            if (!((Board[i][j] == 'X') || (Board[i][j] == 'O')))
+            {
+                // Store the current value of the element in the array
+                char Temporary = Board[i][j];
+
+                // Make the move for the computer
+                Board[i][j] = AI_Move;
+
+                // Calculate the Maximizing move
+                int Value = Min_Max(Board, 0, false);
+
+                // Undo the move made by the computer
+                Board[i][j] = Temporary;
+
+                if (Value > Best_Value)
+                {
+                    Best_Move.Row = i;
+                    Best_Move.Column = j;
+                    Best_Value = Value;
+                }
+            }
+
+        }
+    }
+    return Best_Move;
+}
